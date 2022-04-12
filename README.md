@@ -1,0 +1,2 @@
+# sauron
+Cloudwatch Logs CLI
