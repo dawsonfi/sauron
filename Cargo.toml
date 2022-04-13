@@ -1,0 +1,10 @@
+[package]
+name = "cw-sauron"
+version = "1.0.0"
+edition = "2021"
+description = "Cloudwatch CLI Tool"
+license = "MIT"
+documentation = "https://docs.rs/paw"
+repository = "https://github.com/dawsonfi/sauron"
+
+[dependencies]
