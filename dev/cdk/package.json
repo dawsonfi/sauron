@@ -1,0 +1,32 @@
+{
+  "name": "sauron",
+  "version": "1.0.0",
+  "license": "MIT",
+  "bin": {
+    "cdk2": "bin/cdk2.js"
+  },  
+  "scripts": {
+    "clean": "rm -rf dist && rm -rf cdk.out",
+    "build": "npm run prettier-check && npm run lint && tsc",
+    "watch": "tsc -w",
+    "prepare": "npm run-script build",
+    "lint": "eslint . --ext .ts",
+    "lint-fix": "eslint . --fix --ext .ts",
+    "prettier": "prettier --config ./.prettierrc --write 'lib/**/*.ts'",
+    "prettier-check" : "prettier --config ./.prettierrc --check 'lib/**/*.ts'",
+    "deploy": "npm run build && cdk deploy SauronStack --require-approval=never --force"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "*",
+    "@typescript-eslint/eslint-plugin": "^3.4.0",
+    "@typescript-eslint/parser": "^3.4.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.3",
+    "eslint": "^7.3.1",
+    "prettier": "^2.0.4",
+    "typescript": "^3.6.4"
+  }
+}
