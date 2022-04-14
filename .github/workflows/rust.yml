@@ -1,0 +1,33 @@
+name: Release Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build
+      run: cargo build --verbose
+    - name: Test
+      run: cargo test --verbose
+  release:
+    if: contains(github.event.head_commit.message, 'release')
+    needs: build
+    environment: crates
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build Release
+      run: cargo build --release
+    - name: Login
+      run: cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
+    - name: publish
+      run: cargo publish
+
+
