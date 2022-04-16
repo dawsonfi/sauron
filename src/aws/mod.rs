@@ -1,2 +1,2 @@
-mod cloudwatch;
-mod model;
+pub mod cloudwatch;
+pub mod model;
