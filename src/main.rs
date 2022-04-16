@@ -1,5 +1,5 @@
 use clap::Parser;
-use cw_sauron::aws::cloudwatch::LogClient;
+use cw_sauron::LogClient;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
