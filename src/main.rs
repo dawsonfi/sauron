@@ -10,8 +10,13 @@ async fn main() {
 
     let log_client = LogClient::new().await;
 
-    
-    let query = log_client.list_queries().await.unwrap().into_iter().nth(0).unwrap();
+    let query = log_client
+        .list_queries()
+        .await
+        .unwrap()
+        .into_iter()
+        .nth(0)
+        .unwrap();
 
     let start_time = Utc::now() - Duration::days(2);
     let query_str = query.query_string;
