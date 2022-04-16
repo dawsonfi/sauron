@@ -15,12 +15,7 @@ async fn main() {
 
     match log_command.command.as_str() {
         "list_queries" => {
-            log_client
-                .list_queries()
-                .await
-                .unwrap()
-                .into_iter()
-                .for_each(|query| println!("{:?}", query));
+            println!("{}", log_client.list_queries().await.unwrap());
         }
         _ => println!("Command Not Found"),
     };

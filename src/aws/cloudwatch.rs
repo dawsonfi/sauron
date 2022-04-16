@@ -1,4 +1,4 @@
-use crate::aws::model::{LogQueryInfo, LogQueryInfoBuilder};
+use crate::aws::model::{LogQueryInfoBuilder, LogQueryInfoList};
 #[double]
 use internal::CloudWatchClient;
 use mockall_double::double;
@@ -45,7 +45,7 @@ impl LogClient {
         }
     }
 
-    pub async fn list_queries(self) -> Result<Vec<LogQueryInfo>, Box<dyn Error>> {
+    pub async fn list_queries(self) -> Result<LogQueryInfoList, Box<dyn Error>> {
         let queries = self
             .client
             .describe_queries()
@@ -67,7 +67,7 @@ impl LogClient {
             })
             .collect();
 
-        Ok(queries)
+        Ok(LogQueryInfoList { queries: queries })
     }
 }
 
@@ -114,20 +114,22 @@ mod tests {
 
         assert_eq!(
             queries,
-            vec![
-                LogQueryInfoBuilder::default()
-                    .query_id("dinosaur".to_string())
-                    .query_string("fields dinosaur".to_string())
-                    .log_group_name(Some("dinosaur::logs".to_string()))
-                    .build()
-                    .unwrap(),
-                LogQueryInfoBuilder::default()
-                    .query_id("dinosaur".to_string())
-                    .query_string("fields dinosaur".to_string())
-                    .log_group_name(None)
-                    .build()
-                    .unwrap()
-            ]
+            LogQueryInfoList {
+                queries: vec![
+                    LogQueryInfoBuilder::default()
+                        .query_id("dinosaur".to_string())
+                        .query_string("fields dinosaur".to_string())
+                        .log_group_name(Some("dinosaur::logs".to_string()))
+                        .build()
+                        .unwrap(),
+                    LogQueryInfoBuilder::default()
+                        .query_id("dinosaur".to_string())
+                        .query_string("fields dinosaur".to_string())
+                        .log_group_name(None)
+                        .build()
+                        .unwrap()
+                ]
+            }
         );
     }
 
@@ -145,7 +147,7 @@ mod tests {
 
         let queries = client.list_queries().await.unwrap();
 
-        assert_eq!(queries, vec![]);
+        assert_eq!(queries, LogQueryInfoList { queries: vec![] });
     }
 
     #[tokio::test]
