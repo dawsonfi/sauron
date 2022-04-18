@@ -55,8 +55,9 @@ impl LogClient {
             .into_iter()
             .map(|query| {
                 LogQueryInfoBuilder::default()
-                    .query_id(query.query_definition_id().unwrap().to_string())
-                    .query_string(query.query_string().unwrap().to_string())
+                    .id(query.query_definition_id().unwrap().to_string())
+                    .name(query.name().unwrap().to_string())
+                    .query(query.query_string().unwrap().to_string())
                     .log_group_names(
                         query
                             .log_group_names()
@@ -93,6 +94,7 @@ mod tests {
             .query_definitions(
                 QueryDefinitionsBuilder::default()
                     .query_definition_id("dinosaur")
+                    .name("DinoQuery")
                     .query_string("fields dinosaur")
                     .log_group_names("dinosaur::logs")
                     .build(),
@@ -100,6 +102,7 @@ mod tests {
             .query_definitions(
                 QueryDefinitionsBuilder::default()
                     .query_definition_id("dinosaur")
+                    .name("DinoQuery2")
                     .query_string("fields dinosaur")
                     .build(),
             )
@@ -120,14 +123,16 @@ mod tests {
             LogQueryInfoList {
                 queries: vec![
                     LogQueryInfoBuilder::default()
-                        .query_id("dinosaur".to_string())
-                        .query_string("fields dinosaur".to_string())
+                        .id("dinosaur".to_string())
+                        .name("DinoQuery".to_string())
+                        .query("fields dinosaur".to_string())
                         .log_group_names(vec!["dinosaur::logs".to_string()])
                         .build()
                         .unwrap(),
                     LogQueryInfoBuilder::default()
-                        .query_id("dinosaur".to_string())
-                        .query_string("fields dinosaur".to_string())
+                        .id("dinosaur".to_string())
+                        .name("DinoQuery2".to_string())
+                        .query("fields dinosaur".to_string())
                         .log_group_names(vec![])
                         .build()
                         .unwrap()
