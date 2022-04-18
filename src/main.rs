@@ -1,8 +1,9 @@
 use clap::{command, Command};
 use cw_sauron::LogClient;
+use std::error::Error;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn Error>>{
     let log_client = LogClient::new().await;
 
     let matches = command!()
@@ -14,8 +15,10 @@ async fn main() {
 
     match matches.subcommand() {
         Some(("list-queries", _)) => {
-            println!("{}", log_client.list_queries().await.unwrap());
+            println!("{}", log_client.list_queries().await?);
         }
         _ => unreachable!("Invalid Command"),
     }
+
+    Ok(())
 }
