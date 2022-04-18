@@ -17,7 +17,7 @@
     "deploy": "npm run build && cdk deploy SauronStack --require-approval=never --force"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.13.0"
+    "aws-cdk-lib": "^2.20.0"
   },
   "devDependencies": {
     "@types/node": "*",
