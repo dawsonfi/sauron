@@ -11,7 +11,7 @@ export class SauronLambda extends Construct {
         const mainFunction = `def lambda_handler(input, context):
     status_code = 200
     bode = input["body"]
-
+    print(bode)
     if (bode == "erro"):
         status_code = 404
 
