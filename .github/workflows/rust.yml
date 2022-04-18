@@ -9,6 +9,7 @@ env:
 
 jobs:
   build:
+    environment: aws
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,6 +17,10 @@ jobs:
       run: cargo build --verbose
     - name: Test
       run: cargo test --verbose
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
   release:
     if: contains(github.event.head_commit.message, 'release')
     needs: build
