@@ -9,7 +9,7 @@ mod internal {
 
     use aws_config::from_env;
     use aws_sdk_cloudwatchlogs::{
-        error::DescribeQueriesError, output::DescribeQueriesOutput, Client,
+        error::DescribeQueryDefinitionsError, output::DescribeQueryDefinitionsOutput, Client,
     };
     use aws_smithy_http::result::SdkError;
 
@@ -26,10 +26,10 @@ mod internal {
             }
         }
 
-        pub async fn describe_queries(
+        pub async fn describe_query_definitions(
             self,
-        ) -> Result<DescribeQueriesOutput, SdkError<DescribeQueriesError>> {
-            self.client.describe_queries().send().await
+        ) -> Result<DescribeQueryDefinitionsOutput, SdkError<DescribeQueryDefinitionsError>> {
+            self.client.describe_query_definitions().send().await
         }
     }
 }
@@ -48,19 +48,22 @@ impl LogClient {
     pub async fn list_queries(self) -> Result<LogQueryInfoList, Box<dyn Error>> {
         let queries = self
             .client
-            .describe_queries()
+            .describe_query_definitions()
             .await?
-            .queries
+            .query_definitions
             .unwrap_or_default()
             .into_iter()
             .map(|query| {
                 LogQueryInfoBuilder::default()
-                    .query_id(query.query_id().unwrap().to_string())
+                    .query_id(query.query_definition_id().unwrap().to_string())
                     .query_string(query.query_string().unwrap().to_string())
-                    .log_group_name(
+                    .log_group_names(
                         query
-                            .log_group_name()
-                            .map(|log_group_name| log_group_name.to_string()),
+                            .log_group_names()
+                            .unwrap_or_default()
+                            .into_iter()
+                            .map(|log_group_name| log_group_name.clone())
+                            .collect(),
                     )
                     .build()
                     .unwrap()
@@ -76,27 +79,27 @@ mod tests {
     use super::*;
     use aws_sdk_cloudwatchlogs::error::{
         invalid_parameter_exception::Builder as InvalidParameterExceptionBuilder,
-        DescribeQueriesError, DescribeQueriesErrorKind,
+        DescribeQueryDefinitionsError, DescribeQueryDefinitionsErrorKind,
     };
-    use aws_sdk_cloudwatchlogs::model::query_info::Builder as QueryInfoBuilder;
-    use aws_sdk_cloudwatchlogs::output::describe_queries_output::Builder as DescribeQueriesOutputBuilder;
-    use aws_sdk_cloudwatchlogs::output::DescribeQueriesOutput;
+    use aws_sdk_cloudwatchlogs::model::query_definition::Builder as QueryDefinitionsBuilder;
+    use aws_sdk_cloudwatchlogs::output::describe_query_definitions_output::Builder as DescribeQueryDefinitionOutputBuilder;
+    use aws_sdk_cloudwatchlogs::output::DescribeQueryDefinitionsOutput;
     use aws_smithy_http::result::SdkError;
     use aws_smithy_types::error::Builder as ErrorBuilder;
 
     #[tokio::test]
     async fn should_return_queries() {
-        let mut result = Some(Ok(DescribeQueriesOutputBuilder::default()
-            .queries(
-                QueryInfoBuilder::default()
-                    .query_id("dinosaur")
+        let mut result = Some(Ok(DescribeQueryDefinitionOutputBuilder::default()
+            .query_definitions(
+                QueryDefinitionsBuilder::default()
+                    .query_definition_id("dinosaur")
                     .query_string("fields dinosaur")
-                    .log_group_name("dinosaur::logs")
+                    .log_group_names("dinosaur::logs")
                     .build(),
             )
-            .queries(
-                QueryInfoBuilder::default()
-                    .query_id("dinosaur")
+            .query_definitions(
+                QueryDefinitionsBuilder::default()
+                    .query_definition_id("dinosaur")
                     .query_string("fields dinosaur")
                     .build(),
             )
@@ -104,7 +107,7 @@ mod tests {
 
         let mut cw_client = CloudWatchClient::default();
         cw_client
-            .expect_describe_queries()
+            .expect_describe_query_definitions()
             .times(1)
             .returning(move || result.take().unwrap());
 
@@ -119,13 +122,13 @@ mod tests {
                     LogQueryInfoBuilder::default()
                         .query_id("dinosaur".to_string())
                         .query_string("fields dinosaur".to_string())
-                        .log_group_name(Some("dinosaur::logs".to_string()))
+                        .log_group_names(vec!["dinosaur::logs".to_string()])
                         .build()
                         .unwrap(),
                     LogQueryInfoBuilder::default()
                         .query_id("dinosaur".to_string())
                         .query_string("fields dinosaur".to_string())
-                        .log_group_name(None)
+                        .log_group_names(vec![])
                         .build()
                         .unwrap()
                 ]
@@ -135,11 +138,11 @@ mod tests {
 
     #[tokio::test]
     async fn should_return_empty_query_list() {
-        let mut result = Some(Ok(DescribeQueriesOutputBuilder::default().build()));
+        let mut result = Some(Ok(DescribeQueryDefinitionOutputBuilder::default().build()));
 
         let mut cw_client = CloudWatchClient::default();
         cw_client
-            .expect_describe_queries()
+            .expect_describe_query_definitions()
             .times(1)
             .returning(move || result.take().unwrap());
 
@@ -152,10 +155,10 @@ mod tests {
 
     #[tokio::test]
     async fn should_return_error_when_describe_query_fails() {
-        let mut result: Option<Result<DescribeQueriesOutput, SdkError<DescribeQueriesError>>> =
+        let mut result: Option<Result<DescribeQueryDefinitionsOutput, SdkError<DescribeQueryDefinitionsError>>> =
             Some(Err(SdkError::TimeoutError(Box::new(
-                DescribeQueriesError::new(
-                    DescribeQueriesErrorKind::InvalidParameterException(
+                DescribeQueryDefinitionsError::new(
+                    DescribeQueryDefinitionsErrorKind::InvalidParameterException(
                         InvalidParameterExceptionBuilder::default()
                             .message("Error")
                             .build(),
@@ -166,7 +169,7 @@ mod tests {
 
         let mut cw_client = CloudWatchClient::default();
         cw_client
-            .expect_describe_queries()
+            .expect_describe_query_definitions()
             .times(1)
             .returning(move || result.take().unwrap());
 

@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter, Result};
 pub struct LogQueryInfo {
     pub query_id: String,
     pub query_string: String,
-    pub log_group_name: Option<String>,
+    pub log_group_names: Vec<String>,
 }
 
 impl Display for LogQueryInfo {
@@ -13,9 +13,7 @@ impl Display for LogQueryInfo {
             f,
             "Query Id: {} ({})-> \n{}\n",
             self.query_id,
-            self.log_group_name
-                .clone()
-                .unwrap_or("No Log Group".to_string()),
+            self.log_group_names.join(", "),
             self.query_string
         )
     }
@@ -47,12 +45,12 @@ mod tests {
         let log_query_info = LogQueryInfoBuilder::default()
             .query_id("dinosaur".to_string())
             .query_string("fields dinosaur".to_string())
-            .log_group_name(Some("dinosaur::log".to_string()))
+            .log_group_names(vec!["dinosaur::log".to_string(), "dinosaur::log2".to_string()])
             .build()
             .unwrap();
 
         assert_eq!(
-            "Query Id: dinosaur (dinosaur::log)-> \nfields dinosaur\n",
+            "Query Id: dinosaur (dinosaur::log, dinosaur::log2)-> \nfields dinosaur\n",
             format!("{}", log_query_info)
         );
     }
@@ -62,12 +60,12 @@ mod tests {
         let log_query_info = LogQueryInfoBuilder::default()
             .query_id("dinosaur".to_string())
             .query_string("fields dinosaur".to_string())
-            .log_group_name(None)
+            .log_group_names(vec![])
             .build()
             .unwrap();
 
         assert_eq!(
-            "Query Id: dinosaur (No Log Group)-> \nfields dinosaur\n",
+            "Query Id: dinosaur ()-> \nfields dinosaur\n",
             format!("{}", log_query_info)
         );
     }
@@ -79,18 +77,18 @@ mod tests {
                 LogQueryInfoBuilder::default()
                     .query_id("dinosaur".to_string())
                     .query_string("fields dinosaur".to_string())
-                    .log_group_name(Some("dinosaur::log".to_string()))
+                    .log_group_names(vec!["dinosaur::log".to_string()])
                     .build()
                     .unwrap(),
                 LogQueryInfoBuilder::default()
                     .query_id("dinosaur".to_string())
                     .query_string("fields dinosaur".to_string())
-                    .log_group_name(None)
+                    .log_group_names(vec![])
                     .build()
                     .unwrap(),
             ],
         };
 
-        assert_eq!("Query Id: dinosaur (dinosaur::log)-> \nfields dinosaur\n\nQuery Id: dinosaur (No Log Group)-> \nfields dinosaur\n\n", format!("{}", log_query_info_list));
+        assert_eq!("Query Id: dinosaur (dinosaur::log)-> \nfields dinosaur\n\nQuery Id: dinosaur ()-> \nfields dinosaur\n\n", format!("{}", log_query_info_list));
     }
 }

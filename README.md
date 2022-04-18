@@ -34,4 +34,4 @@ for instructions see [AWS Configuration and credential file settings](https://do
 
 ## List Queries
 
-run `cw-sauron list_queries` to list the available queries on the configured aws account.
+run `cw-sauron list-queries` to list the available queries on the configured aws account.
