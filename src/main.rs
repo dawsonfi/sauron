@@ -1,22 +1,22 @@
-use clap::Parser;
+use clap::{command, Command};
 use cw_sauron::LogClient;
-
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct LogCommand {
-    #[clap(short, long)]
-    command: String,
-}
 
 #[tokio::main]
 async fn main() {
     let log_client = LogClient::new().await;
-    let log_command = LogCommand::parse();
+    // let log_command = LogCommand::parse();
 
-    match log_command.command.as_str() {
-        "list_queries" => {
+    let matches = command!()
+        .propagate_version(true)
+        .subcommand_required(true)
+        .arg_required_else_help(true)
+        .subcommand(Command::new("list_queries").about("List Cloudwatch Queries"))
+        .get_matches();
+
+    match matches.subcommand() {
+        Some(("list_queries", _)) => {
             println!("{}", log_client.list_queries().await.unwrap());
         }
-        _ => println!("Command Not Found"),
-    };
+        _ => unreachable!("Invalid Command"),
+    }
 }
