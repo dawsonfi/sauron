@@ -1,15 +1,16 @@
-use crate::aws::model::{LogQueryInfoBuilder, LogQueryInfoList};
+use crate::aws::model::{LogQueryInfoBuilder, LogQueryInfo, LogQueryInfoList};
 #[double]
 use internal::CloudWatchClient;
 use mockall_double::double;
 use std::error::Error;
+use aws_sdk_cloudwatchlogs::model::QueryDefinition;
 
 #[allow(dead_code)]
 mod internal {
 
     use aws_config::from_env;
     use aws_sdk_cloudwatchlogs::{
-        error::DescribeQueryDefinitionsError, output::DescribeQueryDefinitionsOutput, Client,
+        error::DescribeQueryDefinitionsError, output::DescribeQueryDefinitionsOutput, Client
     };
     use aws_smithy_http::result::SdkError;
 
@@ -53,25 +54,27 @@ impl LogClient {
             .query_definitions
             .unwrap_or_default()
             .into_iter()
-            .map(|query| {
-                LogQueryInfoBuilder::default()
-                    .id(query.query_definition_id().unwrap().to_string())
-                    .name(query.name().unwrap().to_string())
-                    .query(query.query_string().unwrap().to_string())
-                    .log_group_names(
-                        query
-                            .log_group_names()
-                            .unwrap_or_default()
-                            .into_iter()
-                            .map(|log_group_name| log_group_name.clone())
-                            .collect(),
-                    )
-                    .build()
-                    .unwrap()
-            })
+            .map(LogClient::build_query_info)
             .collect();
 
         Ok(LogQueryInfoList { queries: queries })
+    }
+
+    fn build_query_info(query: QueryDefinition) -> LogQueryInfo {
+        LogQueryInfoBuilder::default()
+        .id(query.query_definition_id().unwrap().to_string())
+        .name(query.name().unwrap().to_string())
+        .query(query.query_string().unwrap().to_string())
+        .log_group_names(
+            query
+                .log_group_names()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|log_group_name| log_group_name.clone())
+                .collect(),
+        )
+        .build()
+        .unwrap()
     }
 }
 
