@@ -1,16 +1,16 @@
-use crate::aws::model::{LogQueryInfoBuilder, LogQueryInfo, LogQueryInfoList};
+use crate::aws::model::{LogQueryInfo, LogQueryInfoBuilder, LogQueryInfoList};
+use aws_sdk_cloudwatchlogs::model::QueryDefinition;
 #[double]
 use internal::CloudWatchClient;
 use mockall_double::double;
 use std::error::Error;
-use aws_sdk_cloudwatchlogs::model::QueryDefinition;
 
 #[allow(dead_code)]
 mod internal {
 
     use aws_config::from_env;
     use aws_sdk_cloudwatchlogs::{
-        error::DescribeQueryDefinitionsError, output::DescribeQueryDefinitionsOutput, Client
+        error::DescribeQueryDefinitionsError, output::DescribeQueryDefinitionsOutput, Client,
     };
     use aws_smithy_http::result::SdkError;
 
@@ -29,7 +29,8 @@ mod internal {
 
         pub async fn describe_query_definitions(
             self,
-        ) -> Result<DescribeQueryDefinitionsOutput, SdkError<DescribeQueryDefinitionsError>> {
+        ) -> Result<DescribeQueryDefinitionsOutput, SdkError<DescribeQueryDefinitionsError>>
+        {
             self.client.describe_query_definitions().send().await
         }
     }
@@ -62,19 +63,19 @@ impl LogClient {
 
     fn build_query_info(query: QueryDefinition) -> LogQueryInfo {
         LogQueryInfoBuilder::default()
-        .id(query.query_definition_id().unwrap().to_string())
-        .name(query.name().unwrap().to_string())
-        .query(query.query_string().unwrap().to_string())
-        .log_group_names(
-            query
-                .log_group_names()
-                .unwrap_or_default()
-                .into_iter()
-                .map(|log_group_name| log_group_name.clone())
-                .collect(),
-        )
-        .build()
-        .unwrap()
+            .id(query.query_definition_id().unwrap().to_string())
+            .name(query.name().unwrap().to_string())
+            .query(query.query_string().unwrap().to_string())
+            .log_group_names(
+                query
+                    .log_group_names()
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|log_group_name| log_group_name.clone())
+                    .collect(),
+            )
+            .build()
+            .unwrap()
     }
 }
 
@@ -163,17 +164,18 @@ mod tests {
 
     #[tokio::test]
     async fn should_return_error_when_describe_query_fails() {
-        let mut result: Option<Result<DescribeQueryDefinitionsOutput, SdkError<DescribeQueryDefinitionsError>>> =
-            Some(Err(SdkError::TimeoutError(Box::new(
-                DescribeQueryDefinitionsError::new(
-                    DescribeQueryDefinitionsErrorKind::InvalidParameterException(
-                        InvalidParameterExceptionBuilder::default()
-                            .message("Error")
-                            .build(),
-                    ),
-                    ErrorBuilder::default().build(),
+        let mut result: Option<
+            Result<DescribeQueryDefinitionsOutput, SdkError<DescribeQueryDefinitionsError>>,
+        > = Some(Err(SdkError::TimeoutError(Box::new(
+            DescribeQueryDefinitionsError::new(
+                DescribeQueryDefinitionsErrorKind::InvalidParameterException(
+                    InvalidParameterExceptionBuilder::default()
+                        .message("Error")
+                        .build(),
                 ),
-            ))));
+                ErrorBuilder::default().build(),
+            ),
+        ))));
 
         let mut cw_client = CloudWatchClient::default();
         cw_client

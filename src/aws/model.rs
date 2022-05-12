@@ -48,7 +48,10 @@ mod tests {
             .id("dinosaur".to_string())
             .name("DinoQuery".to_string())
             .query("fields dinosaur".to_string())
-            .log_group_names(vec!["dinosaur::log".to_string(), "dinosaur::log2".to_string()])
+            .log_group_names(vec![
+                "dinosaur::log".to_string(),
+                "dinosaur::log2".to_string(),
+            ])
             .build()
             .unwrap();
 
