@@ -1,5 +1,3 @@
-use std::fmt::{Display, Formatter, Result};
-
 #[derive(Builder, PartialEq, PartialOrd, Debug)]
 pub struct LogQueryInfo {
     pub id: String,
@@ -8,16 +6,24 @@ pub struct LogQueryInfo {
     pub log_group_names: Vec<String>,
 }
 
-impl Display for LogQueryInfo {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(
-            f,
-            "{}({}) ({})-> \n{}\n",
-            self.name,
-            self.id,
-            self.log_group_names.join(", "),
-            self.query
-        )
+impl LogQueryInfo {
+    pub fn to_string(&self, full: bool) -> String {
+        if full {
+            format!(
+                "{} ({}) ({})-> \n{}\n",
+                self.name,
+                self.id,
+                self.log_group_names.join(", "),
+                self.query
+            )
+        } else {
+            format!(
+                "{} ({}) ({})\n",
+                self.name,
+                self.id,
+                self.log_group_names.join(", "),
+            )
+        }
     }
 }
 
@@ -26,15 +32,15 @@ pub struct LogQueryInfoList {
     pub queries: Vec<LogQueryInfo>,
 }
 
-impl Display for LogQueryInfoList {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl LogQueryInfoList {
+    pub fn to_string(&self, full: bool) -> String {
         let data = self
             .queries
             .iter()
-            .map(|query| format!("{}\n", query))
+            .map(|query| format!("{}\n", query.to_string(full)))
             .collect::<String>();
 
-        write!(f, "{}", data)
+        format!("{}", data)
     }
 }
 
@@ -56,8 +62,13 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            "DinoQuery(dinosaur) (dinosaur::log, dinosaur::log2)-> \nfields dinosaur\n",
-            format!("{}", log_query_info)
+            "DinoQuery (dinosaur) (dinosaur::log, dinosaur::log2)-> \nfields dinosaur\n",
+            format!("{}", log_query_info.to_string(true))
+        );
+
+        assert_eq!(
+            "DinoQuery (dinosaur) (dinosaur::log, dinosaur::log2)\n",
+            format!("{}", log_query_info.to_string(false))
         );
     }
 
@@ -72,8 +83,13 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            "DinoQuery(dinosaur) ()-> \nfields dinosaur\n",
-            format!("{}", log_query_info)
+            "DinoQuery (dinosaur) ()-> \nfields dinosaur\n",
+            format!("{}", log_query_info.to_string(true))
+        );
+
+        assert_eq!(
+            "DinoQuery (dinosaur) ()\n",
+            format!("{}", log_query_info.to_string(false))
         );
     }
 
@@ -98,6 +114,7 @@ mod tests {
             ],
         };
 
-        assert_eq!("DinoQuery(dinosaur) (dinosaur::log)-> \nfields dinosaur\n\nDinoQuery2(dinosaur) ()-> \nfields dinosaur\n\n", format!("{}", log_query_info_list));
+        assert_eq!("DinoQuery (dinosaur) (dinosaur::log)-> \nfields dinosaur\n\nDinoQuery2 (dinosaur) ()-> \nfields dinosaur\n\n", format!("{}", log_query_info_list.to_string(true)));
+        assert_eq!("DinoQuery (dinosaur) (dinosaur::log)\n\nDinoQuery2 (dinosaur) ()\n\n", format!("{}", log_query_info_list.to_string(false)));
     }
 }

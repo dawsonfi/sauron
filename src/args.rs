@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, Args};
+use clap::{Args, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about)]
@@ -14,9 +14,9 @@ pub enum EntityType {
 }
 
 #[derive(Debug, Args)]
-pub struct QuerySubCommand {    
+pub struct QuerySubCommand {
     #[clap(subcommand)]
-    pub command: QueryCommand
+    pub command: QueryCommand,
 }
 
 #[derive(Debug, Subcommand)]
@@ -25,18 +25,18 @@ pub enum QueryCommand {
     List(ListQueryArgs),
 
     /// Execute Query on Cloudwatch
-    Execute(ExecuteQueryArgs)
+    Execute(ExecuteQueryArgs),
 }
 
 #[derive(Debug, Args)]
 pub struct ListQueryArgs {
     #[clap(short, parse(from_flag))]
     /// Show full query definition
-    pub full: bool
+    pub full: bool,
 }
 
 #[derive(Debug, Args)]
 pub struct ExecuteQueryArgs {
     /// Id of the query to be executed
-    pub query_id: String
+    pub query_id: String,
 }
