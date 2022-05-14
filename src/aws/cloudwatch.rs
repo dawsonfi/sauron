@@ -31,14 +31,21 @@ mod internal {
         }
 
         pub async fn describe_query_definitions(
-            self,
+            &self,
+            next_token: Option<String>
         ) -> Result<DescribeQueryDefinitionsOutput, SdkError<DescribeQueryDefinitionsError>>
         {
-            self.client.describe_query_definitions().send().await
+            let mut req = self.client.describe_query_definitions();
+
+            if next_token.is_some() {
+                req = req.next_token(next_token.unwrap());
+            }
+
+            req.send().await
         }
 
         pub async fn start_query(
-            self,
+            &self,
             log_group_name: String,
             query_string: String,
             start_time: DateTime<Utc>,
@@ -55,7 +62,7 @@ mod internal {
         }
 
         pub async fn get_query_results(
-            self,
+            &self,
             query_id: String,
         ) -> Result<GetQueryResultsOutput, SdkError<GetQueryResultsError>> {
             self.client
@@ -79,15 +86,30 @@ impl LogClient {
     }
 
     pub async fn list_queries(self) -> Result<LogQueryInfoList, Box<dyn Error>> {
-        let queries = self
-            .client
-            .describe_query_definitions()
-            .await?
-            .query_definitions
-            .unwrap_or_default()
-            .into_iter()
-            .map(LogClient::build_query_info)
-            .collect();
+        let mut queries: Vec<LogQueryInfo>  = vec![];
+        let mut next_token: Option<String> = None;
+
+        loop {
+            let query_results = self.client
+                .describe_query_definitions(next_token)
+                .await?;
+
+            next_token = query_results.next_token.clone();
+
+            let fetched_queries = query_results
+                .query_definitions
+                .clone()
+                .unwrap_or_default()
+                .into_iter()
+                .map(LogClient::build_query_info)
+                .collect::<Vec<LogQueryInfo>>();
+
+            queries.extend(fetched_queries);
+
+            if next_token.is_none() {
+                break;
+            }
+        }        
 
         Ok(LogQueryInfoList { queries: queries })
     }
@@ -147,7 +169,69 @@ mod tests {
         cw_client
             .expect_describe_query_definitions()
             .times(1)
-            .returning(move || result.take().unwrap());
+            .returning(move |_| result.take().unwrap());
+
+        let client = LogClient { client: cw_client };
+
+        let queries = client.list_queries().await.unwrap();
+
+        assert_eq!(
+            queries,
+            LogQueryInfoList {
+                queries: vec![
+                    LogQueryInfoBuilder::default()
+                        .id("dinosaur".to_string())
+                        .name("DinoQuery".to_string())
+                        .query("fields dinosaur".to_string())
+                        .log_group_names(vec!["dinosaur::logs".to_string()])
+                        .build()
+                        .unwrap(),
+                    LogQueryInfoBuilder::default()
+                        .id("dinosaur".to_string())
+                        .name("DinoQuery2".to_string())
+                        .query("fields dinosaur".to_string())
+                        .log_group_names(vec![])
+                        .build()
+                        .unwrap()
+                ]
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn should_return_queries_with_token() {
+        let mut result_with_token = Some(Ok(DescribeQueryDefinitionOutputBuilder::default()
+            .query_definitions(
+                QueryDefinitionsBuilder::default()
+                    .query_definition_id("dinosaur")
+                    .name("DinoQuery")
+                    .query_string("fields dinosaur")
+                    .log_group_names("dinosaur::logs")
+                    .build(),
+            )
+            .next_token("batata")
+            .build()));
+
+        let mut result_without_token = Some(Ok(DescribeQueryDefinitionOutputBuilder::default()
+            .query_definitions(
+                QueryDefinitionsBuilder::default()
+                    .query_definition_id("dinosaur")
+                    .name("DinoQuery2")
+                    .query_string("fields dinosaur")
+                    .build(),
+            )
+            .build()));
+
+        let mut cw_client = CloudWatchClient::default();
+        cw_client
+            .expect_describe_query_definitions()
+            .times(2)
+            .returning(move |token| {
+                if token.is_some() && token.unwrap() == "batata" {
+                    return result_without_token.take().unwrap();
+                }
+                return result_with_token.take().unwrap();
+            });
 
         let client = LogClient { client: cw_client };
 
@@ -184,7 +268,7 @@ mod tests {
         cw_client
             .expect_describe_query_definitions()
             .times(1)
-            .returning(move || result.take().unwrap());
+            .returning(move |_| result.take().unwrap());
 
         let client = LogClient { client: cw_client };
 
@@ -212,7 +296,7 @@ mod tests {
         cw_client
             .expect_describe_query_definitions()
             .times(1)
-            .returning(move || result.take().unwrap());
+            .returning(move |_| result.take().unwrap());
 
         let client = LogClient { client: cw_client };
 
