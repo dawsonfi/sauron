@@ -10,9 +10,12 @@ mod internal {
 
     use aws_config::from_env;
     use aws_sdk_cloudwatchlogs::{
-        error::DescribeQueryDefinitionsError, output::DescribeQueryDefinitionsOutput, Client,
+        error::DescribeQueryDefinitionsError, error::GetQueryResultsError, error::StartQueryError,
+        output::DescribeQueryDefinitionsOutput, output::GetQueryResultsOutput,
+        output::StartQueryOutput, Client,
     };
     use aws_smithy_http::result::SdkError;
+    use chrono::{DateTime, Utc};
 
     pub struct CloudWatchClient {
         client: Client,
@@ -32,6 +35,34 @@ mod internal {
         ) -> Result<DescribeQueryDefinitionsOutput, SdkError<DescribeQueryDefinitionsError>>
         {
             self.client.describe_query_definitions().send().await
+        }
+
+        pub async fn start_query(
+            self,
+            log_group_name: String,
+            query_string: String,
+            start_time: DateTime<Utc>,
+            end_time: DateTime<Utc>,
+        ) -> Result<StartQueryOutput, SdkError<StartQueryError>> {
+            self.client
+                .start_query()
+                .log_group_name(log_group_name)
+                .query_string(query_string)
+                .start_time(start_time.timestamp())
+                .end_time(end_time.timestamp())
+                .send()
+                .await
+        }
+
+        pub async fn get_query_results(
+            self,
+            query_id: String,
+        ) -> Result<GetQueryResultsOutput, SdkError<GetQueryResultsError>> {
+            self.client
+                .get_query_results()
+                .query_id(query_id)
+                .send()
+                .await
         }
     }
 }

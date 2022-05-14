@@ -115,6 +115,9 @@ mod tests {
         };
 
         assert_eq!("DinoQuery (dinosaur) (dinosaur::log)-> \nfields dinosaur\n\nDinoQuery2 (dinosaur) ()-> \nfields dinosaur\n\n", format!("{}", log_query_info_list.to_string(true)));
-        assert_eq!("DinoQuery (dinosaur) (dinosaur::log)\n\nDinoQuery2 (dinosaur) ()\n\n", format!("{}", log_query_info_list.to_string(false)));
+        assert_eq!(
+            "DinoQuery (dinosaur) (dinosaur::log)\n\nDinoQuery2 (dinosaur) ()\n\n",
+            format!("{}", log_query_info_list.to_string(false))
+        );
     }
 }
