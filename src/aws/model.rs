@@ -1,4 +1,4 @@
-#[derive(Builder, PartialEq, PartialOrd, Debug)]
+#[derive(Builder, PartialEq, PartialOrd, Debug, Clone)]
 pub struct LogQueryInfo {
     pub id: String,
     pub name: String,
@@ -42,6 +42,29 @@ impl LogQueryInfoList {
 
         format!("{}", data)
     }
+
+    pub fn find(&self, query_id: String) -> Option<LogQueryInfo> {
+        self.queries
+            .iter()
+            .find(|query| query.id == query_id)
+            .map(LogQueryInfo::clone)
+    }
+}
+
+#[derive(PartialEq, PartialOrd, Debug)]
+pub struct LogResults {
+    pub lines: Vec<LogLine>,
+}
+
+#[derive(PartialEq, PartialOrd, Debug)]
+pub struct LogLine {
+    pub fields: Vec<LogField>,
+}
+
+#[derive(Builder, PartialEq, PartialOrd, Debug)]
+pub struct LogField {
+    pub field: String,
+    pub value: String,
 }
 
 #[cfg(test)]
@@ -119,5 +142,64 @@ mod tests {
             "DinoQuery (dinosaur) (dinosaur::log)\n\nDinoQuery2 (dinosaur) ()\n\n",
             format!("{}", log_query_info_list.to_string(false))
         );
+    }
+
+    #[test]
+    fn should_return_query_info_when_found() {
+        let expected_query = LogQueryInfoBuilder::default()
+            .id("dinosaur".to_string())
+            .name("DinoQuery".to_string())
+            .query("fields dinosaur".to_string())
+            .log_group_names(vec!["dinosaur::log".to_string()])
+            .build()
+            .unwrap();
+
+        let log_query_info_list = LogQueryInfoList {
+            queries: vec![
+                LogQueryInfoBuilder::default()
+                    .id("dinosaur".to_string())
+                    .name("DinoQuery".to_string())
+                    .query("fields dinosaur".to_string())
+                    .log_group_names(vec!["dinosaur::log".to_string()])
+                    .build()
+                    .unwrap(),
+                LogQueryInfoBuilder::default()
+                    .id("dinosaur2".to_string())
+                    .name("DinoQuery2".to_string())
+                    .query("fields dinosaur".to_string())
+                    .log_group_names(vec![])
+                    .build()
+                    .unwrap(),
+            ],
+        };
+
+        let found = log_query_info_list.find("dinosaur".to_string());
+        assert!(found.is_some());
+        assert_eq!(found.unwrap(), expected_query);
+    }
+
+    #[test]
+    fn should_return_empty_when_query_info_not_when_found() {
+        let log_query_info_list = LogQueryInfoList {
+            queries: vec![
+                LogQueryInfoBuilder::default()
+                    .id("dinosaur".to_string())
+                    .name("DinoQuery".to_string())
+                    .query("fields dinosaur".to_string())
+                    .log_group_names(vec!["dinosaur::log".to_string()])
+                    .build()
+                    .unwrap(),
+                LogQueryInfoBuilder::default()
+                    .id("dinosaur2".to_string())
+                    .name("DinoQuery2".to_string())
+                    .query("fields dinosaur".to_string())
+                    .log_group_names(vec![])
+                    .build()
+                    .unwrap(),
+            ],
+        };
+
+        let found = log_query_info_list.find("batata".to_string());
+        assert!(found.is_none());
     }
 }
