@@ -1,3 +1,6 @@
+use std::error::Error;
+use std::fmt::{Display, Formatter, Result};
+
 #[derive(Builder, PartialEq, PartialOrd, Debug, Clone)]
 pub struct LogQueryInfo {
     pub id: String,
@@ -66,6 +69,27 @@ pub struct LogField {
     pub field: String,
     pub value: String,
 }
+
+#[derive(Debug)]
+pub struct TerminalError {
+    details: String,
+}
+
+impl TerminalError {
+    pub fn new(msg: &str) -> Self {
+        TerminalError {
+            details: msg.to_string(),
+        }
+    }
+}
+
+impl Display for TerminalError {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for TerminalError {}
 
 #[cfg(test)]
 mod tests {
@@ -201,5 +225,12 @@ mod tests {
 
         let found = log_query_info_list.find("batata".to_string());
         assert!(found.is_none());
+    }
+
+    #[test]
+    fn terminal_error_should_display_message() {
+        let error = TerminalError::new("batata");
+
+        assert_eq!("batata", format!("{}", error));
     }
 }
