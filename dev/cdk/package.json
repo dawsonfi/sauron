@@ -14,6 +14,7 @@
     "lint-fix": "eslint . --fix --ext .ts",
     "prettier": "prettier --config ./.prettierrc --write 'lib/**/*.ts'",
     "prettier-check" : "prettier --config ./.prettierrc --check 'lib/**/*.ts'",
+    "bootstrap": "cdk bootstrap",
     "deploy": "npm run build && cdk deploy SauronStack --require-approval=never --force"
   },
   "dependencies": {
