@@ -59,15 +59,43 @@ pub struct LogResults {
     pub lines: Vec<LogLine>,
 }
 
+impl LogResults {
+    pub fn to_string(&self, fields: Option<Vec<String>>) -> String {
+        self.lines
+            .iter()
+            .map(|line| format!("{}\n", line.to_string(&fields)))
+            .collect::<String>()
+    }
+}
+
 #[derive(PartialEq, PartialOrd, Debug)]
 pub struct LogLine {
     pub fields: Vec<LogField>,
+}
+
+impl LogLine {
+    pub fn to_string(&self, fields: &Option<Vec<String>>) -> String {
+        self.fields
+            .iter()
+            .filter(|field| match &fields {
+                Some(_) => fields.as_ref().unwrap().contains(&field.field),
+                None => true,
+            })
+            .map(|field| format!("{}\n", field))
+            .collect::<String>()
+    }
 }
 
 #[derive(Builder, PartialEq, PartialOrd, Debug)]
 pub struct LogField {
     pub field: String,
     pub value: String,
+}
+
+impl Display for LogField {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{}: {}", self.field, self.value)
+    }
 }
 
 #[derive(Debug)]
@@ -232,5 +260,124 @@ mod tests {
         let error = TerminalError::new("batata");
 
         assert_eq!("batata", format!("{}", error));
+    }
+
+    #[test]
+    fn log_field_should_display_message() {
+        let log_field = LogField {
+            field: "@message".to_string(),
+            value: "Batata".to_string(),
+        };
+
+        assert_eq!(format!("{}", log_field), "@message: Batata")
+    }
+
+    #[test]
+    fn log_line_should_display_all_fields() {
+        let log_line = LogLine {
+            fields: vec![
+                LogField {
+                    field: "@timestamp".to_string(),
+                    value: "2022-05-15 19:37:19.581".to_string(),
+                },
+                LogField {
+                    field: "@message".to_string(),
+                    value: "Batata".to_string(),
+                },
+            ],
+        };
+
+        assert_eq!(
+            format!("{}", log_line.to_string(&None)),
+            "@timestamp: 2022-05-15 19:37:19.581\n@message: Batata\n"
+        )
+    }
+
+    #[test]
+    fn log_line_should_display_only_provided_fields() {
+        let log_line = LogLine {
+            fields: vec![
+                LogField {
+                    field: "@timestamp".to_string(),
+                    value: "2022-05-15 19:37:19.581".to_string(),
+                },
+                LogField {
+                    field: "@message".to_string(),
+                    value: "Batata".to_string(),
+                },
+            ],
+        };
+
+        assert_eq!(
+            format!(
+                "{}",
+                log_line.to_string(&Some(vec!["@message".to_string()]))
+            ),
+            "@message: Batata\n"
+        )
+    }
+
+    #[test]
+    fn log_results_should_display_all_log_lines() {
+        let log_results = LogResults { lines: vec![
+            LogLine {
+                fields: vec![
+                    LogField {
+                        field: "@timestamp".to_string(),
+                        value: "2022-05-15 19:37:19.581".to_string(),
+                    },
+                    LogField {
+                        field: "@message".to_string(),
+                        value: "Batata".to_string(),
+                    },
+                ],
+            },
+            LogLine {
+                fields: vec![
+                    LogField {
+                        field: "@timestamp".to_string(),
+                        value: "2022-04-15 19:37:19.581".to_string(),
+                    },
+                    LogField {
+                        field: "@message".to_string(),
+                        value: "Frita".to_string(),
+                    },
+                ],
+            }
+        ]};
+
+        assert_eq!(format!("{}", log_results.to_string(None)), "@timestamp: 2022-05-15 19:37:19.581\n@message: Batata\n\n@timestamp: 2022-04-15 19:37:19.581\n@message: Frita\n\n");
+    }
+
+    #[test]
+    fn log_results_should_display_all_log_lines_with_provided_fields() {
+        let log_results = LogResults { lines: vec![
+            LogLine {
+                fields: vec![
+                    LogField {
+                        field: "@timestamp".to_string(),
+                        value: "2022-05-15 19:37:19.581".to_string(),
+                    },
+                    LogField {
+                        field: "@message".to_string(),
+                        value: "Batata".to_string(),
+                    },
+                ],
+            },
+            LogLine {
+                fields: vec![
+                    LogField {
+                        field: "@timestamp".to_string(),
+                        value: "2022-04-15 19:37:19.581".to_string(),
+                    },
+                    LogField {
+                        field: "@message".to_string(),
+                        value: "Frita".to_string(),
+                    },
+                ],
+            }
+        ]};
+
+        assert_eq!(format!("{}", log_results.to_string(Some(vec!["@message".to_string()]))), "@message: Batata\n\n@message: Frita\n\n");
     }
 }
