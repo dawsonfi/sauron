@@ -151,7 +151,10 @@ impl LogClient {
 
             let status = results.status().unwrap();
 
-            if status == &QueryStatus::Failed || status == &QueryStatus::Timeout || status == &QueryStatus::Cancelled {
+            if status == &QueryStatus::Failed
+                || status == &QueryStatus::Timeout
+                || status == &QueryStatus::Cancelled
+            {
                 return Err(Box::new(TerminalError::new("Query failed to run")));
             }
 
