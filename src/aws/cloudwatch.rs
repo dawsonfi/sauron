@@ -14,9 +14,11 @@ mod internal {
 
     use aws_config::from_env;
     use aws_sdk_cloudwatchlogs::{
-        error::DescribeQueryDefinitionsError, error::GetQueryResultsError, error::StartQueryError,
-        output::DescribeQueryDefinitionsOutput, output::GetQueryResultsOutput,
-        output::StartQueryOutput, Client,
+        error::DescribeLogGroupsError, error::DescribeQueryDefinitionsError,
+        error::GetLogEventsError, error::GetQueryResultsError, error::StartQueryError,
+        output::DescribeLogGroupsOutput, output::DescribeQueryDefinitionsOutput,
+        output::GetLogEventsOutput, output::GetQueryResultsOutput, output::StartQueryOutput,
+        Client,
     };
     use aws_smithy_http::result::SdkError;
     use chrono::{DateTime, Utc};
@@ -78,6 +80,40 @@ mod internal {
                 .query_id(query_id)
                 .send()
                 .await
+        }
+
+        pub async fn describe_log_groups(
+            &self,
+            next_token: Option<String>,
+        ) -> Result<DescribeLogGroupsOutput, SdkError<DescribeLogGroupsError>> {
+            let mut req = self.client.describe_log_groups();
+
+            if next_token.is_some() {
+                req = req.next_token(next_token.unwrap());
+            }
+
+            req.send().await
+        }
+
+        pub async fn get_log_events(
+            &self,
+            log_group_name: String,
+            start_time: DateTime<Utc>,
+            end_time: DateTime<Utc>,
+            next_token: Option<String>,
+        ) -> Result<GetLogEventsOutput, SdkError<GetLogEventsError>> {
+            let mut req = self
+                .client
+                .get_log_events()
+                .log_group_name(log_group_name)
+                .start_time(start_time.timestamp())
+                .end_time(end_time.timestamp());
+
+            if next_token.is_some() {
+                req = req.next_token(next_token.unwrap());
+            }
+
+            req.send().await
         }
     }
 }
