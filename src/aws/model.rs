@@ -98,6 +98,35 @@ impl Display for LogField {
     }
 }
 
+#[derive(Builder, PartialEq, PartialOrd, Debug)]
+pub struct LogGroup {
+    pub name: String,
+}
+
+impl Display for LogGroup {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{}", self.name)
+    }
+}
+
+#[derive(PartialEq, PartialOrd, Debug)]
+pub struct LogGroupList {
+    pub log_groups: Vec<LogGroup>,
+}
+
+impl Display for LogGroupList {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(
+            f,
+            "{}",
+            self.log_groups
+                .iter()
+                .map(|log_group| format!("{}\n", log_group))
+                .collect::<String>()
+        )
+    }
+}
+
 #[derive(Debug)]
 pub struct TerminalError {
     details: String,
@@ -394,5 +423,38 @@ mod terminal_error_tests {
             ),
             "@message: Batata\n\n@message: Frita\n\n"
         );
+    }
+}
+
+#[cfg(test)]
+mod log_groups_test {
+    use super::*;
+
+    #[test]
+    fn should_display_log_group() {
+        let log_group = LogGroup {
+            name: "test_log_group".to_string(),
+        };
+
+        assert_eq!(format!("{}", log_group), "test_log_group");
+    }
+
+    #[test]
+    fn should_display_log_group_list() {
+        let log_group_list = LogGroupList {
+            log_groups: vec![
+                LogGroup {
+                    name: "test_log_group1".to_string(),
+                },
+                LogGroup {
+                    name: "test_log_group2".to_string(),
+                },
+            ],
+        };
+
+        assert_eq!(
+            format!("{}", log_group_list),
+            "test_log_group1\ntest_log_group2\n"
+        )
     }
 }
