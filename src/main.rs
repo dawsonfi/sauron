@@ -16,7 +16,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
             QueryCommand::List(args) => {
                 println!("{}", log_client.list_queries().await?.to_string(args.full))
             }
-            QueryCommand::Execute(_) => println!("Not Implemented Yet"),
+            QueryCommand::Execute(args) => {
+                println!(
+                    "{}",
+                    log_client
+                        .execute_query(args.query_id.clone(), args.start_time()?, args.end_time()?)
+                        .await?
+                        .to_string(args.fields)
+                )
+            }
         },
     };
 
