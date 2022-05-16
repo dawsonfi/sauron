@@ -196,21 +196,15 @@ impl LogClient {
 }
 
 #[cfg(test)]
-mod tests {
+mod list_queries_tests {
     use super::*;
     use aws_sdk_cloudwatchlogs::error::{
         invalid_parameter_exception::Builder as InvalidParameterExceptionBuilder,
-        DescribeQueryDefinitionsError, DescribeQueryDefinitionsErrorKind, GetQueryResultsError,
-        GetQueryResultsErrorKind, StartQueryError, StartQueryErrorKind,
+        DescribeQueryDefinitionsError, DescribeQueryDefinitionsErrorKind,
     };
     use aws_sdk_cloudwatchlogs::model::query_definition::Builder as QueryDefinitionsBuilder;
-    use aws_sdk_cloudwatchlogs::model::result_field::Builder as GetQueryResultsFieldBuilder;
     use aws_sdk_cloudwatchlogs::output::describe_query_definitions_output::Builder as DescribeQueryDefinitionOutputBuilder;
-    use aws_sdk_cloudwatchlogs::output::get_query_results_output::Builder as GetQueryResultsOutputBuilder;
-    use aws_sdk_cloudwatchlogs::output::start_query_output::Builder as StartQueryOutputBuilder;
-    use aws_sdk_cloudwatchlogs::output::{
-        DescribeQueryDefinitionsOutput, GetQueryResultsOutput, StartQueryOutput,
-    };
+    use aws_sdk_cloudwatchlogs::output::DescribeQueryDefinitionsOutput;
     use aws_smithy_http::result::SdkError;
     use aws_smithy_types::error::Builder as ErrorBuilder;
 
@@ -352,6 +346,49 @@ mod tests {
 
         assert!(queries.is_err());
     }
+
+    fn mock_describe_queries(cw_client: &mut CloudWatchClient) {
+        let mut result = Some(Ok(DescribeQueryDefinitionOutputBuilder::default()
+            .query_definitions(
+                QueryDefinitionsBuilder::default()
+                    .query_definition_id("dinosaur")
+                    .name("DinoQuery")
+                    .query_string("fields dinosaur")
+                    .log_group_names("dinosaur::logs")
+                    .build(),
+            )
+            .query_definitions(
+                QueryDefinitionsBuilder::default()
+                    .query_definition_id("dinosaur")
+                    .name("DinoQuery2")
+                    .query_string("fields dinosaur")
+                    .build(),
+            )
+            .build()));
+
+        cw_client
+            .expect_describe_query_definitions()
+            .times(1)
+            .returning(move |_| result.take().unwrap());
+    }
+}
+
+#[cfg(test)]
+mod start_query_tests {
+
+    use super::*;
+    use aws_sdk_cloudwatchlogs::error::{
+        invalid_parameter_exception::Builder as InvalidParameterExceptionBuilder,
+        GetQueryResultsError, GetQueryResultsErrorKind, StartQueryError, StartQueryErrorKind,
+    };
+    use aws_sdk_cloudwatchlogs::model::query_definition::Builder as QueryDefinitionsBuilder;
+    use aws_sdk_cloudwatchlogs::model::result_field::Builder as GetQueryResultsFieldBuilder;
+    use aws_sdk_cloudwatchlogs::output::describe_query_definitions_output::Builder as DescribeQueryDefinitionOutputBuilder;
+    use aws_sdk_cloudwatchlogs::output::get_query_results_output::Builder as GetQueryResultsOutputBuilder;
+    use aws_sdk_cloudwatchlogs::output::start_query_output::Builder as StartQueryOutputBuilder;
+    use aws_sdk_cloudwatchlogs::output::{GetQueryResultsOutput, StartQueryOutput};
+    use aws_smithy_http::result::SdkError;
+    use aws_smithy_types::error::Builder as ErrorBuilder;
 
     #[tokio::test]
     async fn should_return_query_results_when_available() {

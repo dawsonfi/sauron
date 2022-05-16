@@ -13,19 +13,19 @@ pub struct SauronArgs {
 pub enum EntityType {
     /// List/Execute saved Queries on Cloudwatch.
     Query(QuerySubCommand),
-    Log(LogsSubCommand)
+    Log(LogsSubCommand),
 }
 
 #[derive(Debug, Args)]
 pub struct LogsSubCommand {
     #[clap(subcommand)]
-    pub command: LogsCommand
+    pub command: LogsCommand,
 }
 
 #[derive(Debug, Subcommand)]
 pub enum LogsCommand {
     Groups,
-    Fetch(FetchLogsArgs)
+    Fetch(FetchLogsArgs),
 }
 
 #[derive(Debug, Args)]
@@ -45,7 +45,7 @@ pub struct FetchLogsArgs {
     #[clap(short)]
     /// (Optional) print only provided fields.
     /// All fields will be print if not provided
-    pub fields: Option<Vec<String>>,    
+    pub fields: Option<Vec<String>>,
 }
 
 #[derive(Debug, Args)]
