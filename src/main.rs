@@ -4,7 +4,7 @@ use clap::Parser;
 use cw_sauron::LogClient;
 use std::error::Error;
 
-use args::{EntityType, QueryCommand, SauronArgs};
+use args::{EntityType, QueryCommand, LogsCommand, SauronArgs};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -26,6 +26,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 );
             }
         },
+        EntityType::Log(sub_command) => match sub_command.command {
+            LogsCommand::Groups => { println!("Not Implemented Yet") },
+            LogsCommand::Fetch(_args) => { println!("Not Implemented Yet") }
+        }
     };
 
     Ok(())
