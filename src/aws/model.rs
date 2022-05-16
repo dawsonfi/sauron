@@ -120,7 +120,7 @@ impl Display for TerminalError {
 impl Error for TerminalError {}
 
 #[cfg(test)]
-mod tests {
+mod log_query_info_tests {
     use super::*;
 
     #[test]
@@ -254,6 +254,11 @@ mod tests {
         let found = log_query_info_list.find("batata".to_string());
         assert!(found.is_none());
     }
+}
+
+#[cfg(test)]
+mod terminal_error_tests {
+    use super::*;
 
     #[test]
     fn terminal_error_should_display_message() {
