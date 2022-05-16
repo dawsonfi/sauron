@@ -7,13 +7,13 @@ license = "MIT"
 repository = "https://github.com/dawsonfi/sauron"
 
 [dependencies]
-aws-config = "0.10.1"
-aws-sdk-cloudwatchlogs = "0.10.1"
-aws-smithy-types = "0.40.2"
-aws-smithy-http = "0.40.2"
+aws-config = "0.12.0"
+aws-sdk-cloudwatchlogs = "0.12.0"
+aws-smithy-types = "0.42.0"
+aws-smithy-http = "0.42.0"
 tokio = { version = "1", features = ["full"] }
 chrono = "0.4.19"
-mockall_double = "0.2.1"
+mockall_double = "0.3.0"
 mockall = "0.11.0"
 async-trait = "0.1.53"
 derive_builder = "0.11.1"

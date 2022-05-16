@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         .execute_query(args.query_id.clone(), args.start_time()?, args.end_time()?)
                         .await?
                         .to_string(args.fields)
-                )
+                );
             }
         },
     };
