@@ -127,6 +127,33 @@ impl Display for LogGroupList {
     }
 }
 
+pub struct LogStream {
+    pub name: String,
+}
+
+impl Display for LogStream {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{}", self.name)
+    }
+}
+
+pub struct LogStreamList {
+    pub log_streams: Vec<LogStream>,
+}
+
+impl Display for LogStreamList {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(
+            f,
+            "{}",
+            self.log_streams
+                .iter()
+                .map(|log_stream| format!("{}\n", log_stream))
+                .collect::<String>()
+        )
+    }
+}
+
 #[derive(Debug)]
 pub struct TerminalError {
     details: String,
@@ -455,6 +482,39 @@ mod log_groups_test {
         assert_eq!(
             format!("{}", log_group_list),
             "test_log_group1\ntest_log_group2\n"
+        )
+    }
+}
+
+#[cfg(test)]
+mod log_streams_test {
+    use super::*;
+
+    #[test]
+    fn should_display_log_stream() {
+        let log_stream = LogStream {
+            name: "test_log_stream".to_string(),
+        };
+
+        assert_eq!(format!("{}", log_stream), "test_log_stream");
+    }
+
+    #[test]
+    fn should_display_log_group_list() {
+        let log_stream_list = LogStreamList {
+            log_streams: vec![
+                LogStream {
+                    name: "test_log_stream1".to_string(),
+                },
+                LogStream {
+                    name: "test_log_stream2".to_string(),
+                },
+            ],
+        };
+
+        assert_eq!(
+            format!("{}", log_stream_list),
+            "test_log_stream1\ntest_log_stream2\n"
         )
     }
 }
