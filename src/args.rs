@@ -41,11 +41,6 @@ pub struct FetchLogsArgs {
     #[clap(short)]
     /// (Optional) End time to execute the query (format 01-12-2022 18:10:11 +0300)
     pub end_time: Option<String>,
-
-    #[clap(short)]
-    /// (Optional) print only provided fields.
-    /// All fields will be print if not provided
-    pub fields: Option<Vec<String>>,
 }
 
 #[derive(Debug, Args)]
