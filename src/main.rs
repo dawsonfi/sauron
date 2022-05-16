@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         },
         EntityType::Log(sub_command) => match sub_command.command {
             LogsCommand::Groups => {
-                println!("{}", log_client.list_log_groups().await?);                
+                println!("{}", log_client.list_log_groups().await?);
             }
             LogsCommand::Fetch(_args) => {
                 println!("Not Implemented Yet")
