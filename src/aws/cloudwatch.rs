@@ -1,6 +1,6 @@
 use crate::aws::model::{
-    LogField, LogLine, LogQueryInfo, LogQueryInfoBuilder, LogQueryInfoList, LogResults,
-    TerminalError,
+    LogField, LogGroup, LogGroupList, LogLine, LogQueryInfo, LogQueryInfoBuilder, LogQueryInfoList,
+    LogResults, TerminalError,
 };
 use aws_sdk_cloudwatchlogs::model::{QueryDefinition, QueryStatus};
 use chrono::{DateTime, Utc};
@@ -211,6 +211,36 @@ impl LogClient {
                 return Ok(LogResults { lines: log_lines });
             }
         }
+    }
+
+    pub async fn list_log_groups(&self) -> Result<LogGroupList, Box<dyn Error>> {
+        let mut log_groups: Vec<LogGroup> = vec![];
+        let mut next_token: Option<String> = None;
+
+        loop {
+            let result = self.client.describe_log_groups(next_token).await?;
+
+            next_token = result.next_token.clone();
+
+            let fetched_log_groups = result
+                .log_groups
+                .unwrap_or_default()
+                .into_iter()
+                .map(|log_group| LogGroup {
+                    name: log_group.log_group_name.unwrap(),
+                })
+                .collect::<Vec<LogGroup>>();
+
+            log_groups.extend(fetched_log_groups);
+
+            if next_token.is_none() {
+                break;
+            }
+        }
+
+        Ok(LogGroupList {
+            log_groups: log_groups,
+        })
     }
 
     fn build_query_info(query: QueryDefinition) -> LogQueryInfo {
@@ -692,5 +722,112 @@ mod start_query_tests {
             .expect_get_query_results()
             .times(1)
             .returning(move |_| result.take().unwrap());
+    }
+}
+
+#[cfg(test)]
+mod list_log_groups_test {
+    use super::*;
+    use aws_sdk_cloudwatchlogs::error::{
+        invalid_parameter_exception::Builder as InvalidParameterExceptionBuilder,
+        DescribeLogGroupsError, DescribeLogGroupsErrorKind,
+    };
+    use aws_sdk_cloudwatchlogs::model::log_group::Builder as LogGroupFieldBuilder;
+    use aws_sdk_cloudwatchlogs::output::describe_log_groups_output::Builder as DescribeLogGroupsOutputBuilder;
+    use aws_sdk_cloudwatchlogs::output::DescribeLogGroupsOutput;
+    use aws_smithy_http::result::SdkError;
+    use aws_smithy_types::error::Builder as ErrorBuilder;
+
+    #[tokio::test]
+    async fn should_return_log_groups() {
+        let mut cw_client = CloudWatchClient::default();
+        let mut result: Option<Result<DescribeLogGroupsOutput, SdkError<DescribeLogGroupsError>>> =
+            Some(Ok(DescribeLogGroupsOutputBuilder::default()
+                .log_groups(
+                    LogGroupFieldBuilder::default()
+                        .log_group_name("log_group_1")
+                        .build(),
+                )
+                .build()));
+
+        cw_client
+            .expect_describe_log_groups()
+            .times(1)
+            .returning(move |_| result.take().unwrap());
+
+        let client = LogClient { client: cw_client };
+
+        let result = client.list_log_groups().await;
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn should_return_log_groups_with_token() {
+        let mut cw_client = CloudWatchClient::default();
+        let mut result_with_token: Option<
+            Result<DescribeLogGroupsOutput, SdkError<DescribeLogGroupsError>>,
+        > = Some(Ok(DescribeLogGroupsOutputBuilder::default()
+            .log_groups(
+                LogGroupFieldBuilder::default()
+                    .log_group_name("log_group_1")
+                    .build(),
+            )
+            .next_token("batata")
+            .build()));
+
+        let mut result_without_token: Option<
+            Result<DescribeLogGroupsOutput, SdkError<DescribeLogGroupsError>>,
+        > = Some(Ok(DescribeLogGroupsOutputBuilder::default()
+            .log_groups(
+                LogGroupFieldBuilder::default()
+                    .log_group_name("log_group_1")
+                    .build(),
+            )
+            .build()));
+
+        cw_client
+            .expect_describe_log_groups()
+            .times(2)
+            .returning(move |next_token| {
+                if next_token.is_some() {
+                    return result_without_token.take().unwrap();
+                }
+
+                return result_with_token.take().unwrap();
+            });
+
+        let client = LogClient { client: cw_client };
+
+        let result = client.list_log_groups().await;
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn should_return_error_when_describe_log_groups_fail() {
+        let mut cw_client = CloudWatchClient::default();
+        let mut result: Option<Result<DescribeLogGroupsOutput, SdkError<DescribeLogGroupsError>>> =
+            Some(Err(SdkError::TimeoutError(Box::new(
+                DescribeLogGroupsError::new(
+                    DescribeLogGroupsErrorKind::InvalidParameterException(
+                        InvalidParameterExceptionBuilder::default()
+                            .message("Error")
+                            .build(),
+                    ),
+                    ErrorBuilder::default().build(),
+                ),
+            ))));
+
+        cw_client
+            .expect_describe_log_groups()
+            .times(1)
+            .returning(move |_| result.take().unwrap());
+
+        let client = LogClient { client: cw_client };
+
+        let result = client.list_log_groups().await;
+
+        assert!(result.is_err());
     }
 }
