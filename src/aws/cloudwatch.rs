@@ -62,8 +62,8 @@ mod internal {
                 .client
                 .start_query()
                 .query_string(query_string)
-                .start_time(start_time.timestamp())
-                .end_time(end_time.timestamp());
+                .start_time(start_time.timestamp_millis())
+                .end_time(end_time.timestamp_millis());
 
             for log_group_name in log_group_names {
                 req = req.log_group_name(log_group_name);
@@ -126,8 +126,8 @@ mod internal {
                 .get_log_events()
                 .log_group_name(log_group_name)
                 .log_stream_name(log_stream_name)
-                .start_time(start_time.timestamp())
-                .end_time(end_time.timestamp());
+                .start_time(start_time.timestamp_millis())
+                .end_time(end_time.timestamp_millis());
 
             if next_token.is_some() {
                 req = req.next_token(next_token.unwrap());
