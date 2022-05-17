@@ -30,6 +30,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
             LogsCommand::Groups => {
                 println!("{}", log_client.list_log_groups().await?);
             }
+            LogsCommand::Streams(args) => {
+                println!("{}", log_client.list_log_streams(args.log_group).await?);
+            }
             LogsCommand::Fetch(_args) => {
                 println!("Not Implemented Yet")
             }

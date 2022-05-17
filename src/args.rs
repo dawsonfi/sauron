@@ -25,7 +25,15 @@ pub struct LogsSubCommand {
 #[derive(Debug, Subcommand)]
 pub enum LogsCommand {
     Groups,
+    Streams(FetchLogStreamsArgs),
     Fetch(FetchLogsArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct FetchLogStreamsArgs {
+    #[clap(short)]
+    /// Log Group for the logs to be fetched
+    pub log_group: String,
 }
 
 #[derive(Debug, Args)]
@@ -33,6 +41,10 @@ pub struct FetchLogsArgs {
     #[clap(short)]
     /// Log Group for the logs to be fetched
     pub log_group: String,
+
+    #[clap(short='t')]
+    /// Log Group for the logs to be fetched
+    pub log_stream: String,
 
     #[clap(short)]
     /// Start time to execute the query (format 01-12-2022 18:10:11 +0300)
