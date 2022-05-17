@@ -33,8 +33,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
             LogsCommand::Streams(args) => {
                 println!("{}", log_client.list_log_streams(args.log_group).await?);
             }
-            LogsCommand::Fetch(_args) => {
-                println!("Not Implemented Yet")
+            LogsCommand::Fetch(args) => {
+                println!("{}", log_client.list_logs(
+                    args.log_group.clone(),
+                    args.log_stream.clone(),
+                    args.start_time()?,
+                    args.end_time()?,
+                ).await?.to_string(None));
             }
         },
     };

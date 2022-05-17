@@ -299,6 +299,56 @@ impl LogClient {
         })
     }
 
+    pub async fn list_logs(
+        &self,
+        log_group_name: String,
+        log_stream_name: String,
+        start_time: DateTime<Utc>,
+        end_time: DateTime<Utc>,
+    ) -> Result<LogResults, Box<dyn Error>> {
+        let mut log_lines: Vec<LogLine> = vec![];
+        let mut next_token: Option<String> = None;
+        let mut last_token: Option<String>;
+
+        loop {            
+            let result = self
+                .client
+                .get_log_events(
+                    log_group_name.clone(),
+                    log_stream_name.clone(),
+                    start_time,
+                    end_time,
+                    next_token.clone(),
+                )
+                .await?;
+
+            last_token = next_token;
+            next_token = result.next_forward_token.clone();
+            
+            let fetched_logs = result
+                .events
+                .unwrap_or_default()
+                .into_iter()
+                .map(|log_event| LogLine {
+                    fields: vec![{
+                        LogField {
+                            value: log_event.message.unwrap(),
+                            field: "@message".to_string(),
+                        }
+                    }],
+                })
+                .collect::<Vec<LogLine>>();
+
+            log_lines.extend(fetched_logs);
+
+            if next_token.is_none() || next_token == last_token {
+                break;
+            }
+        }
+
+        Ok(LogResults { lines: log_lines })
+    }
+
     fn build_query_info(query: QueryDefinition) -> LogQueryInfo {
         LogQueryInfoBuilder::default()
             .id(query.query_definition_id().unwrap().to_string())
