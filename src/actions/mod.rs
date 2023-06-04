@@ -1,4 +1,4 @@
-use crate::actions::tail_logs_action::TailLogsWrapperAction;
+use crate::actions::tail_logs_action::FetchLogGroupsAction;
 use crate::model::error::SauronError;
 use async_trait::async_trait;
 
@@ -27,7 +27,7 @@ impl MainMenuAction {
 #[async_trait]
 impl CloudWatchAction for MainMenuAction {
     async fn options(&self) -> Result<Vec<String>, SauronError> {
-        Ok(vec!["Tail Logs".to_string()])
+        Ok(vec!["Fetch Log Groups".to_string()])
     }
 
     async fn execute(
@@ -35,7 +35,7 @@ impl CloudWatchAction for MainMenuAction {
         selected_option: Option<String>,
     ) -> Result<Option<Box<dyn CloudWatchAction>>, SauronError> {
         Ok(match selected_option.unwrap().as_str() {
-            "Tail Logs" => Some(TailLogsWrapperAction::new()),
+            "Fetch Log Groups" => Some(FetchLogGroupsAction::new()),
             _ => None,
         })
     }
