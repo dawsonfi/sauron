@@ -1,8 +1,8 @@
-use crate::actions::tail_logs_action::FetchLogGroupsAction;
+use crate::actions::fetch_log_groups_action::FetchLogGroupsAction;
 use crate::model::error::SauronError;
 use async_trait::async_trait;
 
-mod tail_logs_action;
+mod fetch_log_groups_action;
 
 #[async_trait]
 pub trait CloudWatchAction {
