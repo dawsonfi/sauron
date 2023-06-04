@@ -1,19 +1,46 @@
-use crate::actions::dummy_action::DummyAction;
+use crate::actions::tail_logs_action::TailLogsAction;
 use crate::model::error::SauronError;
 use async_trait::async_trait;
-use std::fmt::Display;
 
-mod dummy_action;
+mod tail_logs_action;
 
 #[async_trait]
-pub trait CloudWatchFunctionsAction: Display {
-    async fn execute(&self) -> Result<(), SauronError>;
+pub trait CloudWatchAction {
+    async fn options(&self) -> Result<Vec<String>, SauronError>;
 
-    fn name(&self) -> String {
-        "Invalid Action".to_string()
+    async fn execute(
+        &self,
+        selected_option: Option<String>,
+    ) -> Result<Option<Box<dyn CloudWatchAction>>, SauronError>;
+
+    fn prompt(&self) -> Option<String>;
+}
+
+pub struct MainMenuAction {}
+
+impl MainMenuAction {
+    pub fn new() -> Box<Self> {
+        Box::new(Self {})
     }
 }
 
-pub fn get_actions() -> Vec<Box<dyn CloudWatchFunctionsAction>> {
-    vec![Box::new(DummyAction::new())]
+#[async_trait]
+impl CloudWatchAction for MainMenuAction {
+    async fn options(&self) -> Result<Vec<String>, SauronError> {
+        Ok(vec!["Tail Logs".to_string()])
+    }
+
+    async fn execute(
+        &self,
+        selected_option: Option<String>,
+    ) -> Result<Option<Box<dyn CloudWatchAction>>, SauronError> {
+        Ok(match selected_option.unwrap().as_str() {
+            "Tail Logs" => Some(TailLogsAction::new()),
+            _ => None,
+        })
+    }
+
+    fn prompt(&self) -> Option<String> {
+        Some("Select the Action:".to_string())
+    }
 }
