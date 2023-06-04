@@ -1,4 +1,4 @@
-use crate::actions::tail_logs_action::TailLogsAction;
+use crate::actions::tail_logs_action::TailLogsWrapperAction;
 use crate::model::error::SauronError;
 use async_trait::async_trait;
 
@@ -35,7 +35,7 @@ impl CloudWatchAction for MainMenuAction {
         selected_option: Option<String>,
     ) -> Result<Option<Box<dyn CloudWatchAction>>, SauronError> {
         Ok(match selected_option.unwrap().as_str() {
-            "Tail Logs" => Some(TailLogsAction::new()),
+            "Tail Logs" => Some(TailLogsWrapperAction::new()),
             _ => None,
         })
     }

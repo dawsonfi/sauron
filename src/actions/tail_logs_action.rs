@@ -3,16 +3,16 @@ use crate::model::error::SauronError;
 use async_trait::async_trait;
 use tracing::log;
 
-pub struct TailLogsAction {}
+pub struct TailLogsWrapperAction {}
 
-impl TailLogsAction {
+impl TailLogsWrapperAction {
     pub fn new() -> Box<Self> {
         Box::new(Self {})
     }
 }
 
 #[async_trait]
-impl CloudWatchAction for TailLogsAction {
+impl CloudWatchAction for TailLogsWrapperAction {
     async fn options(&self) -> Result<Vec<String>, SauronError> {
         Ok(vec!["Log Group 1".to_string()])
     }
