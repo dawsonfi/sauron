@@ -1,0 +1,118 @@
+name: Sauron Release Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  cdk:
+    environment: aws
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./dev/cdk
+    steps:
+    - uses: actions/checkout@v1    
+    - uses: actions/setup-node@v2
+      with:
+        node-version: "14"
+    - run: npm install
+    - run: npm install cdk --global
+    - name: Deploy stack
+      run: npm run deploy
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: cdk
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: cargo build --verbose
+
+  clippy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup component add clippy
+      - name: Lint
+        run: cargo clippy -- -D warnings
+
+  fmt:
+    runs-on: ubuntu-latest
+    needs: clippy
+    steps:
+      - uses: actions/checkout@v3
+      - name: Format
+        run: cargo fmt -- --check
+
+  audit:
+    runs-on: ubuntu-latest
+    needs: fmt
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Cargo Audit
+        uses: baptiste0928/cargo-install@v2
+        with:
+          crate: cargo-audit
+      - name: Security Audit
+        run: cargo audit -d /tmp/tmp-advisory-db --ignore RUSTSEC-2020-0071
+
+  test:
+    runs-on: ubuntu-latest
+    needs: audit
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test
+        run: cargo test --verbose
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: test
+    container:
+      image: xd009642/tarpaulin:develop-nightly
+      options: --security-opt seccomp=unconfined
+    steps:
+      - uses: actions/checkout@v3
+      - name: Generate code coverage
+        run: |
+          cargo +nightly tarpaulin --verbose --lib --out Xml
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
+
+  integration-test:
+    concurrency: beta-deploy
+    environment: aws
+    runs-on: ubuntu-latest
+    needs: coverage
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test
+        run: cargo test --verbose -F integration
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_INTEG_TEST_REGION }}
+
+  release:
+    if: contains(github.event.head_commit.message, 'release')
+    needs: build
+    environment: crates
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build Release
+      run: cargo build --release
+    - name: Login
+      run: cargo login ${{ secrets.CARGO_REGISTRY_TOKEN }}
+    - name: publish
+      run: cargo publish
