@@ -26,6 +26,6 @@ impl CloudWatchAction for FetchLogGroupsAction {
     }
 
     fn prompt(&self) -> Option<String> {
-        None
+        Some("Select Log Group: ".to_string())
     }
 }

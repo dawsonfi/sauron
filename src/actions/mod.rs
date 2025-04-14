@@ -1,8 +1,10 @@
 use crate::actions::fetch_log_groups_action::FetchLogGroupsAction;
 use crate::model::error::SauronError;
 use async_trait::async_trait;
+use crate::actions::custom_command_action::CustomCommandAction;
 
 mod fetch_log_groups_action;
+mod custom_command_action;
 
 #[async_trait]
 pub trait CloudWatchAction {
@@ -27,7 +29,10 @@ impl MainMenuAction {
 #[async_trait]
 impl CloudWatchAction for MainMenuAction {
     async fn options(&self) -> Result<Vec<String>, SauronError> {
-        Ok(vec!["Fetch Log Groups".to_string()])
+        Ok(vec![
+            "Fetch Log Groups".to_string(),
+            "Custom Command".to_string()
+        ])
     }
 
     async fn execute(
@@ -36,6 +41,7 @@ impl CloudWatchAction for MainMenuAction {
     ) -> Result<Option<Box<dyn CloudWatchAction>>, SauronError> {
         Ok(match selected_option.unwrap().as_str() {
             "Fetch Log Groups" => Some(FetchLogGroupsAction::new()),
+            "Custom Command" => Some(CustomCommandAction::new()),
             _ => None,
         })
     }
